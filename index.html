@@ -45,7 +45,7 @@
 
   <div id="app" class="min-h-screen flex flex-col">
 
-    <!-- PAGE 1: GATEWAY -->
+    <!-- PAGE 1: INSTALLATION & GATEWAY PAGE -->
     <section id="page-install" class="flex-1 flex flex-col justify-center items-center p-6 text-center max-w-md mx-auto my-auto">
       <div class="w-20 h-20 bg-brand-600/20 text-brand-500 rounded-3xl flex items-center justify-center mb-5 shadow-xl shadow-brand-500/10 ring-1 ring-brand-500/30">
         <i data-lucide="bike" class="w-10 h-10"></i>
@@ -72,7 +72,7 @@
           </div>
           <div>
             <h4 class="text-xs font-semibold text-slate-200">Predictive Backdated Math</h4>
-            <p class="text-[11px] text-slate-400">Instantly flags overdue maintenance based on your registration odometer.</p>
+            <p class="text-[11px] text-slate-400">Instantly flags overdue maintenance based on your starting odometer.</p>
           </div>
         </div>
       </div>
@@ -87,6 +87,10 @@
         <span>Open Garage Dashboard</span>
         <i data-lucide="arrow-right" class="w-4 h-4 ml-auto text-slate-400"></i>
       </button>
+
+      <p id="install-hint" class="text-[11px] text-slate-500 mt-4 hidden">
+        To install manually: tap browser menu (⋮ or Share) and choose <strong>"Add to Home Screen"</strong>.
+      </p>
     </section>
 
     <!-- PAGE 2: MOTORCYCLE SETUP / GARAGE MANAGEMENT -->
@@ -180,7 +184,6 @@
 
     <!-- PAGE 3: MAIN DASHBOARD -->
     <section id="page-dashboard" class="hidden flex-1 flex flex-col pb-12">
-      <!-- Sticky Navigation Header with Garage Switcher -->
       <header class="bg-slate-800/90 border-b border-slate-700/80 sticky top-0 z-30 backdrop-blur-md px-4 py-3 flex items-center justify-between">
         <div class="flex items-center gap-2.5">
           <div class="p-2 bg-brand-600 text-white rounded-xl shadow-md shrink-0">
@@ -290,7 +293,7 @@
           </div>
         </div>
 
-        <!-- Predictive Smart Maintenance Gauges (Includes Backdated Overdue Calculation) -->
+        <!-- Smart Maintenance Gauges -->
         <div class="bg-slate-800/70 border border-slate-700/80 rounded-2xl p-5 shadow-lg">
           <div class="flex items-center justify-between mb-4">
             <h3 class="text-sm font-bold text-white flex items-center gap-2">
@@ -549,10 +552,9 @@
   </div>
 
   <script>
-    // Multi-Bike Garage Database Store
     let bikes = JSON.parse(localStorage.getItem('motolog_garage_bikes')) || [];
     let activeBikeId = localStorage.getItem('motolog_active_bike') || null;
-    let allLogs = JSON.parse(localStorage.getItem('motolog_garage_logs')) || {}; // { bikeId: { service: [], fuel: [] } }
+    let allLogs = JSON.parse(localStorage.getItem('motolog_garage_logs')) || {};
 
     document.addEventListener('DOMContentLoaded', () => {
       lucide.createIcons();
@@ -561,7 +563,7 @@
       setupEventListeners();
 
       if (bikes.length === 0) {
-        showSetupModal('add');
+        showPage('page-install');
       } else {
         if (!activeBikeId || !bikes.find(b => b.id === activeBikeId)) {
           activeBikeId = bikes[0].id;
@@ -576,14 +578,21 @@
       window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredPrompt = e;
+        document.getElementById('install-hint').classList.remove('hidden');
       });
 
       document.getElementById('btn-install-pwa').addEventListener('click', async () => {
         if (deferredPrompt) {
           deferredPrompt.prompt();
+          const { outcome } = await deferredPrompt.userChoice;
+          if (outcome === 'accepted') {
+            if (bikes.length === 0) showSetupModal('add');
+            else { showPage('page-dashboard'); renderDashboard(); }
+          }
           deferredPrompt = null;
         } else {
-          alert("To install, tap your browser menu (⋮ or Share) and select 'Add to Home Screen'.");
+          if (bikes.length === 0) showSetupModal('add');
+          else { showPage('page-dashboard'); renderDashboard(); }
         }
       });
 
@@ -647,7 +656,6 @@
       showPage('page-setup');
     }
 
-    // Bike Setup Form Submit (Add / Edit)
     document.getElementById('form-bike-setup').addEventListener('submit', (e) => {
       e.preventDefault();
       const bikeIdInput = document.getElementById('setup-bike-id').value;
@@ -684,7 +692,6 @@
       renderDashboard();
     });
 
-    // Reset Database Button for active bike
     document.getElementById('btn-reset-db').addEventListener('click', () => {
       const bikeId = document.getElementById('setup-bike-id').value;
       const targetBike = bikes.find(b => b.id === bikeId);
@@ -718,7 +725,7 @@
 
     function renderDashboard() {
       if (bikes.length === 0) {
-        showSetupModal('add');
+        showPage('page-install');
         return;
       }
 
@@ -726,7 +733,6 @@
       activeBikeId = activeBike.id;
       localStorage.setItem('motolog_active_bike', activeBikeId);
 
-      // Render Garage Selector Options
       const selector = document.getElementById('garage-selector');
       selector.innerHTML = bikes.map(b => `
         <option value="${b.id}" ${b.id === activeBikeId ? 'selected' : ''}>
@@ -742,14 +748,12 @@
       const sLogs = allLogs[activeBikeId].service;
       const fLogs = allLogs[activeBikeId].fuel;
 
-      // Odometer Calculations
       const maxServiceOdo = sLogs.length > 0 ? Math.max(...sLogs.map(l => l.odo)) : 0;
       const maxFuelOdo = fLogs.length > 0 ? Math.max(...fLogs.map(f => f.odo)) : 0;
       const currentOdo = Math.max(activeBike.initialOdo, maxServiceOdo, maxFuelOdo);
 
       document.getElementById('metric-current-odo').innerText = `${currentOdo.toLocaleString()} km`;
 
-      // Financials
       const totalService = sLogs.reduce((sum, l) => sum + (l.partsCost || 0) + (l.laborCost || 0), 0);
       const totalFuel = fLogs.reduce((sum, f) => sum + (f.cost || 0), 0);
       const grandTotal = totalService + totalFuel;
@@ -761,7 +765,6 @@
       const diyCount = sLogs.filter(l => l.isDiy).length;
       document.getElementById('metric-diy-saved').innerText = `₱${(diyCount * 250).toFixed(2)}`;
 
-      // Fuel Mileage
       if (fLogs.length >= 2) {
         const sorted = [...fLogs].sort((a, b) => a.odo - b.odo);
         const dist = sorted[sorted.length - 1].odo - sorted[0].odo;
@@ -771,7 +774,6 @@
         document.getElementById('metric-avg-fuel').innerText = '-- km/L';
       }
 
-      // LTO Expiry Badge
       if (activeBike.ltoDate) {
         const lto = new Date(activeBike.ltoDate);
         const diffDays = Math.ceil((lto - new Date()) / (1000 * 60 * 60 * 24));
@@ -789,9 +791,7 @@
       renderChart(sLogs, fLogs);
     }
 
-    // Smart Predictive Gauges with Backdated Overdue Computation
     function renderSmartGauges(bike, currentOdo, sLogs) {
-      // Oil Gauge
       const oilLogs = sLogs.filter(l => l.type === 'Change Oil').sort((a, b) => b.odo - a.odo);
       const lastOilOdo = oilLogs.length > 0 ? oilLogs[0].odo : bike.initialOdo;
       const oilInterval = bike.oilInterval || 3000;
@@ -817,7 +817,6 @@
         oilLabel.innerHTML = `Engine Oil Change`;
       }
 
-      // Chain Gauge
       const chainLogs = sLogs.filter(l => l.type === 'Chain Maintenance').sort((a, b) => b.odo - a.odo);
       const lastChainOdo = chainLogs.length > 0 ? chainLogs[0].odo : bike.initialOdo;
       const chainInterval = bike.chainInterval || 500;
@@ -906,6 +905,7 @@
       lucide.createIcons();
     }
 
+    let expenseChartInstance = null;
     function renderChart(sLogs, fLogs) {
       const ctx = document.getElementById('expenseChart').getContext('2d');
       const labels = [];
@@ -942,7 +942,6 @@
       });
     }
 
-    // Weather Sniffer
     document.getElementById('btn-fetch-weather').addEventListener('click', () => {
       const desc = document.getElementById('weather-desc');
       const temp = document.getElementById('weather-temp');
@@ -981,6 +980,8 @@
       document.getElementById(inputId).value = Math.max(activeBike.initialOdo, maxServiceOdo, maxFuelOdo) + offset;
     };
 
+    let activeDetailId = null;
+    let activeDetailKind = null;
     window.openDetailModal = function(id, kind) {
       activeDetailId = id; activeDetailKind = kind;
       const body = document.getElementById('detail-body');
