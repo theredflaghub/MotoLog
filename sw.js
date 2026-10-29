@@ -9,7 +9,7 @@ const CDN = [
 self.addEventListener('install', (e) => {
   e.waitUntil((async () => {
     const cache = await caches.open(CACHE);
-    await cache.addAll(CORE);                                  // must succeed
+    await cache.addAll(CORE.map((u) => new Request(u, { cache: 'reload' })));                                  // must succeed
     await Promise.allSettled(CDN.map((u) => cache.add(u)));    // best effort: one failure no longer breaks install
   })());
   self.skipWaiting();

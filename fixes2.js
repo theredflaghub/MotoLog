@@ -126,7 +126,7 @@
 
     const line = (dot, txt) => `<div class="flex items-center gap-2 text-xs"><span class="w-2 h-2 rounded-full shrink-0 ${dot}"></span><span class="text-slate-200">${txt}</span></div>`;
     let rows = [...base, ...more].filter(i => i.r >= 0.9).sort((a, c) => c.r - a.r)
-      .map(i => line(i.r >= 1 ? 'bg-rose-500' : 'bg-amber-500', `${NAME[i.t] || i.t}: ${i.r >= 1 ? 'overdue' : 'due soon'} <span class="text-slate-400">(${i.used.toLocaleString()} / ${i.km.toLocaleString()} km)</span>`));
+      .map(i => line(i.r >= 1 ? 'bg-rose-500' : 'bg-amber-500', `${NAME[i.t] || i.t}: ${i.r >= 1 ? 'overdue' : 'due soon'} <span class="text-slate-400">(${i.mo && i.m / i.mo > i.used / (i.km || 1) ? Math.floor(i.m) + ' / ' + i.mo + ' months' : i.used.toLocaleString() + ' / ' + i.km.toLocaleString() + ' km'})</span>`));
     if (b.ltoDate) {
       const d = Math.ceil((new Date(b.ltoDate + 'T00:00:00') - new Date()) / 864e5);
       if (d <= 30) rows.unshift(line(d < 0 ? 'bg-rose-500' : 'bg-amber-500', `LTO registration: ${d < 0 ? 'expired' : 'due in ' + d + ' days'}`));

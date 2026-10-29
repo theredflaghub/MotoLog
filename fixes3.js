@@ -46,7 +46,7 @@
   csvBtn.onclick = () => {
     const b = bikes.find(x => x.id === activeBikeId), g = logs();
     if (!b) return;
-    const q = x => '"' + String(x ?? '').replace(/"/g, '""') + '"';
+    const q = x => { let t = String(x ?? ''); if (/^[=+\-@]/.test(t)) t = "'" + t; return '"' + t.replace(/"/g, '""') + '"'; };
     const head = ['Type', 'Date', 'Odometer km', 'Category', 'Parts', 'Labor', 'Total', 'Liters', 'Price per L', 'Full tank', 'DIY', 'Shop', 'Notes'];
     const rows = [
       ...g.service.map(l => ['Service', l.date, l.odo, l.type, l.partsCost || 0, l.laborCost || 0, cost(l), '', '', '', l.isDiy ? 'Yes' : 'No', l.shop || '', l.desc || '']),
