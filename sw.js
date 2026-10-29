@@ -1,9 +1,9 @@
-const CACHE = 'motolog-garage-v4';
-const CORE = ['./', './index.html', './manifest.json', './fixes.js', './fixes2.js', './fixes3.js', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
+const CACHE = 'motolog-garage-v5';
+const CORE = ['./', './index.html', './manifest.json', './motolog-extras.js', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 const CDN = [
-  'https://cdn.tailwindcss.com',
-  'https://cdn.jsdelivr.net/npm/chart.js',
-  'https://unpkg.com/lucide@latest'
+  'https://cdn.tailwindcss.com/3.4.17',
+  'https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.js',
+  'https://unpkg.com/lucide@0.383.0'
 ];
 
 self.addEventListener('install', (e) => {
