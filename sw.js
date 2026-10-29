@@ -1,5 +1,5 @@
-const CACHE = 'motolog-garage-v3';
-const CORE = ['./', './index.html', './manifest.json', './fixes.js', './fixes2.js'];
+const CACHE = 'motolog-garage-v4';
+const CORE = ['./', './index.html', './manifest.json', './fixes.js', './fixes2.js', './fixes3.js', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 const CDN = [
   'https://cdn.tailwindcss.com',
   'https://cdn.jsdelivr.net/npm/chart.js',
